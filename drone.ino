@@ -7,6 +7,7 @@
 #include <WebSocketsServer.h>
 #include <ESP32Servo.h> // ESP32Servo library installed by Library Manager
 #include "ESC.h" // RC_ESP library installed by Library Manager
+#include <math.h>
 
 /************** PIN DEFINITIONS *************/
 
@@ -52,10 +53,30 @@ char msg_buf[10];
 int led_state = 0;
 bool stop;
 signed short accel[3] = {0,0,0};
-signed short tilt_loc[10] = {0,0,0,0,0,0,0,0,0,0};
-int loc = 10;
+signed short gyro[3] = {0,0,0};
 int cur_rpm = 0;
-
+bool confirm;
+float acc_x_ave = 0,acc_y_ave = 0,acc_z_ave = 0;
+float gyr_x_ave = 0,gyr_y_ave = 0,gyr_z_ave = 0;
+float Ax=0,Ay=0,Az=0,Gx=0,Gy=0,Gz=0;
+float roll,pitch,yaw;
+float dT = 0.002;
+float pitch_accel,roll_accel;
+float recipNorm;
+float ki,kp,kd;
+float e_roll,e_roll_prev,e_roll_dif,e_roll_int,e_pitch,e_pitch_prev,e_pitch_int,e_pitch_dif,e_yaw,e_yaw_prev,e_yaw_dif,e_yaw_int;
+float roll_ave,pitch_ave,yaw_ave,cntrl_roll,cntrl_pitch,cntrl_yaw;
+float a;
+float filter_const;
+float thrust_const;
+float t_roll[4] = {0,0,0,0};
+float t_pitch[4] = {0,0,0,0};
+float t_yaw[4] = {0,0,0,0};
+float w_roll[4] = {0,0,0,0};
+float w_pitch[4] = {0,0,0,0};
+float w_yaw[4] = {0,0,0,0};
+float cmd_thrust[4] = {0,0,0,0};
+float cmd_speed[4] = {0,0,0,0};
 /**************** SETUP *****************/
 
 void setup() {
@@ -67,23 +88,209 @@ void setup() {
   client_setup();
   ESC_setup();
 
+  ki = 0.1;
+  kp = 3;
+  kd = 12;
+
+  a = 0.0921;
+  thrust_const = pow(7.7141,-7);
+  filter_const = 0.5;
+// averaging summed accelerometer values
+  roll_ave = 1.58;
+  pitch_ave = 0.02;
+  yaw_ave = 0.00;
+
+  Serial.print("Roll, Pitch, Yaw Values: ");
+  Serial.print("\t");
+  Serial.print(roll_ave);
+  Serial.print("\t");
+  Serial.print(pitch_ave);
+  Serial.print("\t");
+  Serial.println(yaw_ave);
+
+  delay(5000);
+  
+  roll = 0;
+  pitch = 0;
+  yaw = 0;
+
 }
 
 /**************** LOOP *****************/
 
 void loop() {
+
+  thrust_const = 0.5;
   
+  read_accelerometer((accel),(accel+1),(accel+2));
+  read_gyroscope((gyro),(gyro+1),(gyro+2));
+
+// low pass filter on accelerometer readings
+  Ax = (float) Ax + 0.1*(accel[0] - Ax);
+  Ay = (float) Ay + 0.1*(accel[1] - Ay);
+  Az = (float) Az + 0.1*(accel[2] - Az);
+
+  pitch_accel = atan2(-Ax,sqrt(Ay * Ay + Az * Az));
+  roll_accel = atan2(Ay,Az);
+
+// integrating gyro values to git roll pitch and yaw
+  roll = (float) gyro[0]*0.0174533 * dT;
+  pitch = (float) gyro[1]*0.0174533  * dT;
+  yaw = (float) gyro[2]*0.0174533  * dT;
+
+  pitch = (1-thrust_const)*pitch + thrust_const*pitch_accel;
+  roll = (1-thrust_const)*pitch + thrust_const*roll_accel;
+
+//  Serial.print("Roll Pitch Yaw: ");
+//  Serial.print("\t");
+//  Serial.print(roll);
+//  Serial.print("\t");
+//  Serial.print(pitch);
+//  Serial.print("\t");
+//  Serial.println(yaw);
+
   webSocket.loop();
+
+  if (roll < 0 && roll >= -1.59) {
+    roll_ave = -1.55;
+  } else if (roll >= 0 && roll <= 1.59) {
+    roll_ave = 1.55;
+  }
+  e_roll = roll_ave - roll;
+  e_pitch = pitch_ave - pitch;
+  e_yaw = yaw_ave - yaw;
+
+  e_roll_dif = e_roll - e_roll_prev;
+  e_roll_int += e_roll*dT; 
+  e_roll_prev = e_roll;
+
+//  if (e_roll_int >= 50) {
+//    e_roll_int = 0;
+//  }
+
+  e_pitch_dif = e_pitch - e_pitch_prev;
+  e_pitch_int += e_pitch*dT; 
+  e_pitch_prev = e_pitch;
+
+//  if (e_pitch_int >= 50) {
+//    e_pitch_int = 0;
+//  }
+  
+  e_yaw_dif = e_yaw - e_yaw_prev;
+  e_yaw_int += e_yaw*dT; 
+  e_yaw_prev = e_yaw;
+
+//  if (abs(e_yaw_int) >= 50) {
+//    e_yaw_int = ;
+//  }
+
+  cntrl_roll = kp*e_roll + kd*e_roll_dif + ki*e_roll_int;
+  cntrl_pitch = kp*e_pitch + kd*e_pitch_dif + ki*e_pitch_int;
+  cntrl_yaw = kp*e_yaw + kd*e_yaw_dif + ki*e_yaw_int;
+
+  t_roll[0] += 1/a * cntrl_roll;
+  t_roll[1] += 1/a * cntrl_roll;
+  t_roll[2] -= 1/a * cntrl_roll;
+  t_roll[3] -= 1/a * cntrl_roll;
+
+  t_pitch[0] += 1/a * cntrl_pitch;
+  t_pitch[1] -= 1/a * cntrl_pitch;
+  t_pitch[2] -= 1/a * cntrl_pitch;
+  t_pitch[3] += 1/a * cntrl_pitch;
+
+  t_yaw[0] += cntrl_yaw;
+  t_yaw[1] -= cntrl_yaw;
+  t_yaw[2] += cntrl_yaw;
+  t_yaw[3] -= cntrl_yaw;
+
+  w_roll[0] = sqrt(t_roll[0] / thrust_const);
+  w_roll[0] = sqrt(t_roll[1] / thrust_const);
+  w_roll[2] = sqrt(t_roll[2] / thrust_const);
+  w_roll[3] = sqrt(t_roll[3] / thrust_const);
+
+  w_pitch[0] = sqrt(t_pitch[0] / thrust_const);
+  w_pitch[1] = sqrt(t_pitch[1] / thrust_const);
+  w_pitch[2] = sqrt(t_pitch[2] / thrust_const);
+  w_pitch[3] = sqrt(t_pitch[3] / thrust_const);
+
+  w_yaw[0] = sqrt(t_yaw[0] / thrust_const);
+  w_yaw[1] = sqrt(t_yaw[1] / thrust_const);
+  w_yaw[2] = sqrt(t_yaw[2] / thrust_const);
+  w_yaw[3] = sqrt(t_yaw[3] / thrust_const);
+
+  cmd_speed[0] = w_roll[0] + w_pitch[0] + w_yaw[0];
+  cmd_speed[1] = w_roll[1] + w_pitch[1] + w_yaw[1];
+  cmd_speed[2] = w_roll[2] + w_pitch[2] + w_yaw[2];
+  cmd_speed[3] = w_roll[3] + w_pitch[3] + w_yaw[3];
+
+  cmd_thrust[0] = t_roll[0] + t_pitch[0] + t_yaw[0];
+  cmd_thrust[1] = t_roll[1] + t_pitch[1] + t_yaw[1];
+  cmd_thrust[2] = t_roll[2] + t_pitch[2] + t_yaw[2];
+  cmd_thrust[3] = t_roll[3] + t_pitch[3] + t_yaw[3];
+
+  command_speed(w_roll[0],1);
+  command_speed(w_roll[1],2);
+  command_speed(w_roll[2],3);
+  command_speed(w_roll[3],4);
+
+  command_speed(w_pitch[0],1);
+  command_speed(w_pitch[1],2);
+  command_speed(w_pitch[2],3);
+  command_speed(w_pitch[3],4);
+
+  command_speed(w_yaw[0],1);
+  command_speed(w_yaw[1],2);
+  command_speed(w_yaw[2],3);
+  command_speed(w_yaw[3],4);
+
+  Serial.print("Command Speeds [roll]: ");
+  Serial.print("\t");
+  Serial.print(cmd_thrust[0]);
+  Serial.print("\t");
+  Serial.print(cmd_thrust[1]);
+  Serial.print("\t");
+  Serial.print(cmd_thrust[2]);
+  Serial.print("\t");
+  Serial.println(cmd_thrust=[3]);
+
+//  Serial.print(cntrl_roll);
+//  Serial.print("\t");
+//  Serial.print(cntrl_pitch);
+//  Serial.print("\t");
+//  Serial.println(cntrl_yaw);
+
+  delay(dT*1000); // delay 2 ms -- known timing for integral calculation
 
 }
 
 /************** HELPERS ***************/
 
-void command_speed(int rpm){
-  ESC_1.speed(rpm);
-  ESC_2.speed(rpm);
-  ESC_3.speed(rpm);
-  ESC_4.speed(rpm);
+void read_accelerometer(signed short *acc_x,signed short *acc_y,signed short *acc_z){
+
+ imu.read_data(acc_x,IMU_OUTX_L_XL);
+ imu.read_data(acc_y,IMU_OUTY_L_XL);
+ imu.read_data(acc_z,IMU_OUTZ_L_XL);
+  
+}
+
+void read_gyroscope(signed short *gyr_x, signed short *gyr_y, signed short *gyr_z){
+ 
+ imu.read_data(gyr_x,IMU_OUTX_L_G);
+ imu.read_data(gyr_y,IMU_OUTY_L_G);
+ imu.read_data(gyr_z,IMU_OUTZ_L_G);
+  
+}
+
+void command_speed(int rpm, int motor){
+  if (motor == 1){
+    ESC_1.speed(rpm);
+  } else if (motor == 2){
+    ESC_2.speed(rpm);
+  } else if (motor == 3){
+    ESC_3.speed(rpm);
+  } else if (motor == 4){
+    ESC_4.speed(rpm);
+  }
 }
 
 void ESC_setup() {
@@ -145,7 +352,8 @@ void client_setup() {
   webSocket.begin();
   webSocket.onEvent(onWebSocketEvent);
 
-  Serial.println("Websocket Start");  
+  Serial.println("Websocket Start"); 
+  Serial.println(""); 
 }
 
 // Callback: receiving any WebSocket message
@@ -182,18 +390,27 @@ void onWebSocketEvent(uint8_t client_num,
         
         cur_rpm += 25;
         Serial.printf("Incrementing RPM by 25");
-        command_speed(cur_rpm);
+        command_speed(cur_rpm,1);
+        command_speed(cur_rpm,2);
+        command_speed(cur_rpm,3);
+        command_speed(cur_rpm,4);
 
       // Report which led is on 
       } else if ( strcmp((char *)payload, "decreaseRPM") == 0) {
         
         cur_rpm -= 25;
         Serial.printf("Decrementing RPM by 25");
-        command_speed(cur_rpm);
+        command_speed(cur_rpm,1);
+        command_speed(cur_rpm,2);
+        command_speed(cur_rpm,3);
+        command_speed(cur_rpm,4);
       } else if ( strcmp((char *)payload, "shutdown") == 0) {
         cur_rpm = 1000;
         Serial.printf("Shutting off motors");
-        command_speed(cur_rpm);
+        command_speed(cur_rpm,1);
+        command_speed(cur_rpm,2);
+        command_speed(cur_rpm,3);
+        command_speed(cur_rpm,4);
       } else if ( strcmp((char *)payload, "getRPM") == 0 ) {
         
         sprintf(msg_buf, "%d", cur_rpm);
@@ -241,3 +458,70 @@ void onPageNotFound(AsyncWebServerRequest *request) {
                   "] HTTP GET request of " + request->url());
   request->send(404, "text/plain", "Not found");
 }
+
+/************ IMU CALIBRATION ***********/
+//
+//  acc_x_ave = 0;
+//  acc_y_ave = 0;
+//  acc_z_ave = 0;
+//
+//  gyr_x_ave = 0;
+//  gyr_y_ave = 0;
+//  gyr_z_ave = 0;
+//
+//  Serial.println("Lay IMU flat");
+//  confirm = 0;
+//  
+//  while (not confirm){
+//    if (Serial.available() > 0){
+//      confirm = Serial.read();
+//    }
+//    delay(200);
+//  }
+//  
+//  confirm = 0;
+//  Serial.println("Calibrating...");
+//  Serial.println("");
+//  
+//  for (int i = 0; i < 1000; i++) {
+//    
+//    read_accelerometer((accel),(accel+1),(accel+2));
+//    read_gyroscope((gyro),(gyro+1),(gyro+2));
+//
+//// summing and normalizationg accelerometer readings from 16 bit word in two's complement
+//    acc_x_ave += (float) accel[0]/32768;
+//    acc_y_ave += (float) accel[1]/32768;
+//    acc_z_ave += (float) accel[2]/32768;
+//
+//// summing and normalizing gyroscope readings from 16 bit word in two's complement
+//    gyr_x_ave += (float) gyro[0]/32768;
+//    gyr_y_ave += (float) gyro[1]/32768;
+//    gyr_z_ave += (float) gyro[2]/32768;
+//    
+//  }
+//
+//// averaging summed accelerometer values
+//  acc_x_ave = (float) acc_x_ave/1000;
+//  acc_y_ave = (float) acc_y_ave/1000;
+//  acc_z_ave = (float) acc_z_ave/1000;
+//
+//// averaging summed gyroscope values
+//  gyr_x_ave = (float) gyr_x_ave/1000;
+//  gyr_y_ave = (float) gyr_y_ave/1000;
+//  gyr_z_ave = (float) gyr_z_ave/1000;
+//
+//  Serial.print("Accelerometer Values: ");
+//  Serial.print("\t");
+//  Serial.print(acc_x_ave);
+//  Serial.print("\t");
+//  Serial.print(acc_y_ave);
+//  Serial.print("\t");
+//  Serial.println(acc_z_ave);
+//
+//  Serial.print("Gyroscope Values: ");
+//  Serial.print("\t");
+//  Serial.print(gyr_x_ave);
+//  Serial.print("\t");
+//  Serial.print(gyr_y_ave);
+//  Serial.print("\t");
+//  Serial.println(gyr_z_ave);

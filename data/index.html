@@ -1,140 +1,37 @@
 <!DOCTYPE html>
-<meta charset="utf-8" />
-<title>WebSocket Test</title>
 
-<script language="javascript" type="text/javascript">
+<head>
+    <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>drone.Follow</title>
+	<link href="style.css" rel="stylesheet" type="text/css">
+</head>
 
-var url = "ws://192.168.4.1:1337/";
-var output;
-var button_up;
-var button_down;
-var canvas;
-var context;
+<body>
+    <script src="drone_functions.js"></script>
+    <div class="top-bar">
+        drone.Follow
+    </div>
+    <div class="grid-container">
+        <div class="grid-child">
+            <p style="text-align:center;">
+                <div class="grid-child-one;" style="padding-bottom:5%;">
+                    <button style="font-size:150%;border-radius:25px;background-color:blue;align-self:center;width: 90%;color:white;" id="changeRPM" onclick = "onPress_up()">Increase RPM</button>
+                </div>
+                <div class="grid-child-one;"style="padding-bottom:5%;">
+                    <button style="font-size:150%;border-radius:25px;background-color:blue;align-self:center;width: 90%;color:white;" id="changeRPM" onclick = "onPress_down()">Decrease RPM</button>
+                </div>
+                <div class="grid-child-one;"style="padding-bottom:5%;">
+                    <button style="font-size:150%;border-radius:25px;background-color:red;align-self:center;width: 90%;color:white;" id="changeRPM" onclick = "shutdown()">KILL MOTORS</button>    
+                </div>
+            </p>
+        </div>
+        <div class="grid-child">        
+            <p style="text-align:center;background-color:blue;padding-top:1%;">
+                <textarea style="width:97%;padding-bottom:1%;" id="msg" rows="20" cols="70"></textarea>
+            </p>
+        </div>
+    </div>
+</body>
 
-// This is called when the page finishes loading
-function init() {
 
-    // Assign page elements to variables
-    button_up = document.getElementById("changeRPM");
-    output = document.getElementById("output");
-    canvas = document.getElementById("led");
-    
-    // Draw circle in canvas
-    
-    // Connect to WebSocket server
-    wsConnect(url);
-}
-
-// Call this to connect to the WebSocket server
-function wsConnect(url) {
-    
-    // Connect to WebSocket server
-    websocket = new WebSocket(url);
-    
-    // Assign callbacks
-    websocket.onopen = function(evt) { onOpen(evt) };
-    websocket.onclose = function(evt) { onClose(evt) };
-    websocket.onmessage = function(evt) { onMessage(evt) };
-    websocket.onerror = function(evt) { onError(evt) };
-}
-
-// Called when a WebSocket connection is established with the server
-function onOpen(evt) {
-
-    // Log connection state
-    console.log("Connected");
-    writeToScreen("Connected");
-    
-    // Enable button
-    button.disabled = false;
-    
-    // Get the current state of the LED
-    doSend("getRPM");
-}
-
-// Called when the WebSocket connection is closed
-function onClose(evt) {
-
-    // Log disconnection state
-    console.log("Disconnected");
-    writeToScreen("Disconnected");
-    
-    // Disable button
-    button.disabled = true;
-    
-    // Try to reconnect after a few seconds
-    setTimeout(function() { wsConnect(url) }, 2000);
-}
-
-function fillArc(x,y,color) {
-    context.arc(x,y,15,0,Math.Pi*2,false);
-    context.fillStyle = color;
-    context.fill();
-}
-
-function writeToScreen(message)
-{
-    document.getElementById("msg").innerHTML += message + "\n";
-    document.getElementById("msg").scrollTop = document.getElementById("msg").scrollHeight;
-}
-
-// Called when a message is received from the server
-function onMessage(evt) {
-
-    // Print out our received message
-    console.log("Received: " + evt.data);
-
-    writeToScreen("MOTOR RPM: " + evt.data);
-    
-    // // Update circle graphic with LED state
-    // switch(evt.data) {
-    //     case "0":
-    //         writeToScreen("MOTOR RPM: " + );
-    //         break;
-    //     default:
-    //         break;
-    // }
-}
-
-// Called when a WebSocket error occurs
-function onError(evt) {
-    console.log("ERROR: " + evt.data);
-}
-
-// Sends a message to the server (and prints it to the console)
-function doSend(message) {
-    console.log("Sending: " + message);
-    websocket.send(message);
-}
-
-// Called whenever the HTML button is pressed
-function onPress_up() {
-    doSend("increaseRPM");
-    doSend("getRPM");
-}
-
-function onPress_down() {
-    doSend("decreaseRPM");
-    doSend("getRPM");
-}
-
-function shutdown(){
-    doSend("shutdown");
-    doSend("getRPM");
-}
-
-// Call the init function as soon as the page loads
-window.addEventListener("load", init, false);
-
-</script>
-
-<h2>IMU Tilt Location</h2>
-<h2><button id="changeRPM" onclick = "onPress_up()">Increase RPM [+25]</button></h2>
-<h2><button id="changeRPM" onclick = "onPress_down()">Decrease RPM [-25]</button></h2>
-<h2><button id="changeRPM" onclick = "shutdown()">KILL MOTORS</button></h2>
-
-<h3>Log</h3>
-    
-    <p style="text-align:center">
-        <textarea id="msg" rows="20" cols="50"></textarea>
-    </p>

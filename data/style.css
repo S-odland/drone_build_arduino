@@ -1,0 +1,122 @@
+html, body {
+    background-color: white;
+    margin: 0;
+    padding: 0;
+}
+
+nav.sticky {
+    position: sticky;
+    top: 0;
+    margin: 0;
+    width: auto;
+    z-index: 2;
+}
+
+.top-bar {
+    top: 0;
+    margin: 0;
+    width: auto;
+    font-size:400%;
+    padding-left:5%;
+    background-color:blue;
+    color:white;
+    padding-bottom: 15pt;
+    padding-top:15pt;
+}
+
+.intro {
+    color: black;
+    position: relative;
+    width: 90%;
+    height: 800px;
+    border-style: none;
+    margin-block-start: 0;
+    margin-block-end: 0;
+    font-family: 'Serif', Georgia;
+}
+
+.topnav {
+    background-color:black;
+    color: black;
+    overflow: hidden;
+    opacity: 0.8;
+}
+
+.topnav l {
+    float: left;
+}
+
+.topnav r {
+    float: right;
+}
+
+.topnav a:active {
+    background-color: azure;
+    color: black;
+}
+
+.topnav a {
+    background-color: black;
+    float: right;
+    color: white;
+    padding: 14px 16px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 17px;
+    transition-duration: 0.5s;
+}
+
+.topnav a:hover {
+    background-color: azure;
+    color: black;
+    transform: scale(1.1);
+}
+
+img:hover {
+    transform: scale(1.1);
+}
+
+img {
+    transition-duration: 0.5s;
+}
+.container {
+    padding:5px;
+}
+
+.grid-container {
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-gap: 5%;
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-top: 5%;
+    padding-bottom: 5%;
+    font-size: 20pt;
+}
+
+.grid-child {
+    border-radius: 5%;
+    padding: 5%;
+    transition-duration: 0.5s;
+}
+
+.grid-child-one {
+
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-top: 5%;
+    padding-bottom: 5%;
+    font-size: 20pt;
+    transition-duration: 0.5s;
+
+}
+
+.grid-child-one:hover{
+    background-color:darkgreen;
+    transform: scale(1.1);
+}
+
+.grid-child-one:active {
+    background-color:darkgreen;
+}
