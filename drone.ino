@@ -59,24 +59,11 @@ bool confirm;
 float acc_x_ave = 0,acc_y_ave = 0,acc_z_ave = 0;
 float gyr_x_ave = 0,gyr_y_ave = 0,gyr_z_ave = 0;
 float Ax=0,Ay=0,Az=0,Gx=0,Gy=0,Gz=0;
-float roll,pitch,yaw;
 float dT = 0.002;
-float pitch_accel,roll_accel;
-float recipNorm;
-float ki,kp,kd;
-float e_roll,e_roll_prev,e_roll_dif,e_roll_int,e_pitch,e_pitch_prev,e_pitch_int,e_pitch_dif,e_yaw,e_yaw_prev,e_yaw_dif,e_yaw_int;
-float roll_ave,pitch_ave,yaw_ave,cntrl_roll,cntrl_pitch,cntrl_yaw;
-float a;
-float filter_const;
-float thrust_const;
-float t_roll[4] = {0,0,0,0};
-float t_pitch[4] = {0,0,0,0};
-float t_yaw[4] = {0,0,0,0};
-float w_roll[4] = {0,0,0,0};
-float w_pitch[4] = {0,0,0,0};
-float w_yaw[4] = {0,0,0,0};
-float cmd_thrust[4] = {0,0,0,0};
-float cmd_speed[4] = {0,0,0,0};
+float roll,pitch,yaw,pitch_accel,roll_accel,recipNorm,ki,kp,kd,roll_ave,pitch_ave,yaw_ave,cntrl_roll,cntrl_pitch,cntrl_yaw,a,filter_const,
+      thrust_const,ave_speed,command_m1,command_m2,command_m3,command_m4,e_roll,e_roll_prev,e_roll_dif,e_roll_int,e_pitch,e_pitch_prev,e_pitch_int,
+      e_pitch_dif,e_yaw,e_yaw_prev,e_yaw_dif,e_yaw_int;
+int rpm_1 = 0, rpm_2 = 0, rpm_3 = 0, rpm_4 = 0;
 /**************** SETUP *****************/
 
 void setup() {
@@ -96,6 +83,10 @@ void setup() {
   thrust_const = pow(7.7141,-7);
   filter_const = 0.5;
 // averaging summed accelerometer values
+
+// TODO: need to run proper IMU calibration to see what 'Flat' value are for roll, pitch, yaw
+
+
   roll_ave = 1.58;
   pitch_ave = 0.02;
   yaw_ave = 0.00;
@@ -130,8 +121,8 @@ void loop() {
   Ay = (float) Ay + 0.1*(accel[1] - Ay);
   Az = (float) Az + 0.1*(accel[2] - Az);
 
-  pitch_accel = atan2(-Ax,sqrt(Ay * Ay + Az * Az));
-  roll_accel = atan2(Ay,Az);
+  pitch_accel = 180 * atan2(Ax,sqrt(Ay * Ay + Az * Az))/M_PI;
+  roll_accel = 180 * atan2(Ay,sqrt(Ax * Ax + Az * Az))/M_PI;
 
 // integrating gyro values to git roll pitch and yaw
   roll = (float) gyro[0]*0.0174533 * dT;
@@ -151,11 +142,13 @@ void loop() {
 
   webSocket.loop();
 
+  
   if (roll < 0 && roll >= -1.59) {
     roll_ave = -1.55;
   } else if (roll >= 0 && roll <= 1.59) {
     roll_ave = 1.55;
   }
+  
   e_roll = roll_ave - roll;
   e_pitch = pitch_ave - pitch;
   e_yaw = yaw_ave - yaw;
@@ -188,76 +181,48 @@ void loop() {
   cntrl_pitch = kp*e_pitch + kd*e_pitch_dif + ki*e_pitch_int;
   cntrl_yaw = kp*e_yaw + kd*e_yaw_dif + ki*e_yaw_int;
 
-  t_roll[0] += 1/a * cntrl_roll;
-  t_roll[1] += 1/a * cntrl_roll;
-  t_roll[2] -= 1/a * cntrl_roll;
-  t_roll[3] -= 1/a * cntrl_roll;
+  command_m1 = ave_speed + ( cntrl_roll + cntrl_pitch);
+  command_m2 = ave_speed + (-cntrl_roll + cntrl_pitch);
+  command_m3 = ave_speed + (-cntrl_roll - cntrl_pitch);
+  command_m4 = ave_speed + ( cntrl_roll - cntrl_pitch);
 
-  t_pitch[0] += 1/a * cntrl_pitch;
-  t_pitch[1] -= 1/a * cntrl_pitch;
-  t_pitch[2] -= 1/a * cntrl_pitch;
-  t_pitch[3] += 1/a * cntrl_pitch;
-
-  t_yaw[0] += cntrl_yaw;
-  t_yaw[1] -= cntrl_yaw;
-  t_yaw[2] += cntrl_yaw;
-  t_yaw[3] -= cntrl_yaw;
-
-  w_roll[0] = sqrt(t_roll[0] / thrust_const);
-  w_roll[0] = sqrt(t_roll[1] / thrust_const);
-  w_roll[2] = sqrt(t_roll[2] / thrust_const);
-  w_roll[3] = sqrt(t_roll[3] / thrust_const);
-
-  w_pitch[0] = sqrt(t_pitch[0] / thrust_const);
-  w_pitch[1] = sqrt(t_pitch[1] / thrust_const);
-  w_pitch[2] = sqrt(t_pitch[2] / thrust_const);
-  w_pitch[3] = sqrt(t_pitch[3] / thrust_const);
-
-  w_yaw[0] = sqrt(t_yaw[0] / thrust_const);
-  w_yaw[1] = sqrt(t_yaw[1] / thrust_const);
-  w_yaw[2] = sqrt(t_yaw[2] / thrust_const);
-  w_yaw[3] = sqrt(t_yaw[3] / thrust_const);
-
-  cmd_speed[0] = w_roll[0] + w_pitch[0] + w_yaw[0];
-  cmd_speed[1] = w_roll[1] + w_pitch[1] + w_yaw[1];
-  cmd_speed[2] = w_roll[2] + w_pitch[2] + w_yaw[2];
-  cmd_speed[3] = w_roll[3] + w_pitch[3] + w_yaw[3];
-
-  cmd_thrust[0] = t_roll[0] + t_pitch[0] + t_yaw[0];
-  cmd_thrust[1] = t_roll[1] + t_pitch[1] + t_yaw[1];
-  cmd_thrust[2] = t_roll[2] + t_pitch[2] + t_yaw[2];
-  cmd_thrust[3] = t_roll[3] + t_pitch[3] + t_yaw[3];
-
-  command_speed(w_roll[0],1);
-  command_speed(w_roll[1],2);
-  command_speed(w_roll[2],3);
-  command_speed(w_roll[3],4);
-
-  command_speed(w_pitch[0],1);
-  command_speed(w_pitch[1],2);
-  command_speed(w_pitch[2],3);
-  command_speed(w_pitch[3],4);
-
-  command_speed(w_yaw[0],1);
-  command_speed(w_yaw[1],2);
-  command_speed(w_yaw[2],3);
-  command_speed(w_yaw[3],4);
-
-  Serial.print("Command Speeds [roll]: ");
+  Serial.print("CONTROLS: Roll Pitch Yaw: ");
   Serial.print("\t");
-  Serial.print(cmd_thrust[0]);
+  Serial.print(cntrl_roll);
   Serial.print("\t");
-  Serial.print(cmd_thrust[1]);
+  Serial.print(cntrl_pitch);
   Serial.print("\t");
-  Serial.print(cmd_thrust[2]);
-  Serial.print("\t");
-  Serial.println(cmd_thrust=[3]);
+  Serial.println(cntrl_yaw);
 
-//  Serial.print(cntrl_roll);
-//  Serial.print("\t");
-//  Serial.print(cntrl_pitch);
-//  Serial.print("\t");
-//  Serial.println(cntrl_yaw);
+/* Need to relate control to motor speeds symetrical about the drone frame
+
+        (0) MOTOR 1         (0) MOTOR 2
+        
+                   +X (+roll right )
+                   ^
+                   | 
+                   | 
+                    --- > +Y (+pitch down)
+               
+
+        (0) MOTOR 4         (0) MOTOR 3
+
+        NEGATIVE ROLL  :: MOTOR 1,4 UP, MOTOR 2,3 DOWN
+        POSITIVE ROLL  :: MOTOR 2,3 UP, MOTOR 1,4 DOWN
+
+        NEGATIVE PITCH :: MOTOR 1,2 UP, MOTOR 3,4 DOWN
+        POSITIVE PITCH :: MOTOR 3,4 UP, MOTOR 1,2 DOWN
+
+
+    FUNCTION TO MAP ANGLE CONTROLS TO MOTOR SPEEDS:
+
+      - Have average speed --> set by user through web interface
+      - Lower sensitivity at smaller error, higher sensitivity at lower error
+      - Print out control values to get an idea for the mapping 
+      - Mapping should be of the form +/- RPM * Weight where weight has a relation to control values
+      
+*/
+
 
   delay(dT*1000); // delay 2 ms -- known timing for integral calculation
 
@@ -386,34 +351,88 @@ void onWebSocketEvent(uint8_t client_num,
       Serial.printf("[%u] Received text: %s\n", client_num, payload);
 
       // Toggle LED
-      if ( strcmp((char *)payload, "increaseRPM") == 0 ) {
+      if ( strcmp((char *)payload, "motor_1_up") == 0 ) {
         
-        cur_rpm += 25;
-        Serial.printf("Incrementing RPM by 25");
-        command_speed(cur_rpm,1);
-        command_speed(cur_rpm,2);
-        command_speed(cur_rpm,3);
-        command_speed(cur_rpm,4);
+        rpm_1 += 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_1,1);
 
       // Report which led is on 
-      } else if ( strcmp((char *)payload, "decreaseRPM") == 0) {
+      } else if ( strcmp((char *)payload, "motor_1_down") == 0 ) {
+
+        rpm_1 -= 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_1,1);
         
-        cur_rpm -= 25;
-        Serial.printf("Decrementing RPM by 25");
-        command_speed(cur_rpm,1);
-        command_speed(cur_rpm,2);
-        command_speed(cur_rpm,3);
-        command_speed(cur_rpm,4);
+      } else if ( strcmp((char *)payload, "motor_2_up") == 0 ) {
+
+        rpm_2 += 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_2,2);
+        
+      } else if ( strcmp((char *)payload, "motor_2_down") == 0 ) {
+
+        rpm_2 -= 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_2,2);
+
+      } else if ( strcmp((char *)payload, "motor_3_up") == 0 ) {
+
+        rpm_3 += 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_3,3);
+        
+      } else if ( strcmp((char *)payload, "motor_3_down") == 0 ) {
+
+        rpm_3 -= 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_3,3);
+
+      } else if ( strcmp((char *)payload, "motor_4_up") == 0) {
+
+        rpm_4 += 5;
+        Serial.printf("Incrementing RPM by 5");
+        command_speed(rpm_4,4);
+
+      } else if ( strcmp((char *)payload, "motor_4_down") == 0) {
+        
+        rpm_4 -= 5;
+        Serial.printf("Decrementing RPM by 5");
+        command_speed(rpm_4,4);
+
       } else if ( strcmp((char *)payload, "shutdown") == 0) {
-        cur_rpm = 1000;
-        Serial.printf("Shutting off motors");
-        command_speed(cur_rpm,1);
-        command_speed(cur_rpm,2);
-        command_speed(cur_rpm,3);
-        command_speed(cur_rpm,4);
-      } else if ( strcmp((char *)payload, "getRPM") == 0 ) {
         
-        sprintf(msg_buf, "%d", cur_rpm);
+        rpm_1 = 1090;
+        rpm_2 = 1090;
+        rpm_3 = 1090;
+        rpm_4 = 1090;
+        Serial.printf("Shutting off motors");
+        command_speed(rpm_1,1);
+        command_speed(rpm_2,2);
+        command_speed(rpm_3,3);
+        command_speed(rpm_4,4);
+        
+      } else if ( strcmp((char *)payload, "getRPM_1") == 0 ) {
+        
+        sprintf(msg_buf, "%d", rpm_1);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "getRPM_2") == 0 ) {
+        
+        sprintf(msg_buf, "%d", rpm_2);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "getRPM_3") == 0 ) {
+        
+        sprintf(msg_buf, "%d", rpm_3);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "getRPM_4") == 0 ) {
+        
+        sprintf(msg_buf, "%d", rpm_4);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 

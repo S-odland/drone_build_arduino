@@ -2,6 +2,7 @@ var url = "ws://192.168.4.1:1337/";
 var output;
 var button_up;
 var button_down;
+var button;
 var canvas;
 var context;
 
@@ -9,7 +10,7 @@ var context;
 function init() {
 
     // Assign page elements to variables
-    button_up = document.getElementById("changeRPM");
+    button = document.getElementById("changeRPM");
     output = document.getElementById("output");
     canvas = document.getElementById("led");
     
@@ -102,15 +103,46 @@ function doSend(message) {
 }
 
 // Called whenever the HTML button is pressed
-function onPress_up() {
-    doSend("increaseRPM");
-    doSend("getRPM");
+function onPress_up_1() {
+    doSend("motor_1_up");
+    doSend("getRPM_1");
 }
 
-function onPress_down() {
-    doSend("decreaseRPM");
-    doSend("getRPM");
+function onPress_down_1() {
+    doSend("motor_1_down");
+    doSend("getRPM_1");
 }
+
+function onPress_up_2() {
+    doSend("motor_2_up");
+    doSend("getRPM_2");
+}
+
+function onPress_down_2() {
+    doSend("motor_2_down");
+    doSend("getRPM_2");
+}
+
+function onPress_up_3() {
+    doSend("motor_3_up");
+    doSend("getRPM_3");
+}
+
+function onPress_down_3() {
+    doSend("motor_3_down");
+    doSend("getRPM_3");
+}
+
+function onPress_up_4() {
+    doSend("motor_4_up");
+    doSend("getRPM_4");
+}
+
+function onPress_down_4() {
+    doSend("motor_4_down");
+    doSend("getRPM_4");
+}
+
 
 function shutdown(){
     doSend("shutdown");
