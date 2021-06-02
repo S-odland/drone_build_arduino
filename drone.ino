@@ -84,12 +84,39 @@ void setup() {
   filter_const = 0.5;
 // averaging summed accelerometer values
 
-// TODO: need to run proper IMU calibration to see what 'Flat' value are for roll, pitch, yaw
+  read_accelerometer((accel),(accel+1),(accel+2));
+  read_gyroscope((gyro),(gyro+1),(gyro+2));
 
+  for (int i = 0; i < 1000; i ++) {
 
-  roll_ave = 1.58;
-  pitch_ave = 0.02;
-  yaw_ave = 0.00;
+    read_accelerometer((accel),(accel+1),(accel+2));
+    read_gyroscope((gyro),(gyro+1),(gyro+2));
+
+    // low pass filter on accelerometer readings
+    Ax = (float) Ax + 0.1*(accel[0] - Ax);
+    Ay = (float) Ay + 0.1*(accel[1] - Ay);
+    Az = (float) Az + 0.1*(accel[2] - Az);
+  
+    pitch_accel = 180 * atan2(Ax,sqrt(Ay * Ay + Az * Az))/M_PI;
+    roll_accel = 180 * atan2(Ay,sqrt(Ax * Ax + Az * Az))/M_PI;
+  
+    // integrating gyro values to git roll pitch and yaw
+    roll = (float) gyro[0]*0.0174533 * dT;
+    pitch = (float) gyro[1]*0.0174533  * dT;
+    yaw = (float) gyro[2]*0.0174533  * dT;
+  
+    pitch = (1-thrust_const)*pitch + thrust_const*pitch_accel;
+    roll = (1-thrust_const)*pitch + thrust_const*roll_accel;
+
+    roll_ave += roll_accel;
+    pitch_ave += pitch_accel;
+    yaw_ave += yaw;
+    
+  }
+
+  roll_ave = roll_ave/1000;
+  pitch_ave = pitch_ave/1000;
+  yaw_ave = yaw_ave/1000;
 
   Serial.print("Roll, Pitch, Yaw Values: ");
   Serial.print("\t");
@@ -144,9 +171,9 @@ void loop() {
 
   
   if (roll < 0 && roll >= -1.59) {
-    roll_ave = -1.55;
+    roll_ave = -roll_ave;
   } else if (roll >= 0 && roll <= 1.59) {
-    roll_ave = 1.55;
+    roll_ave = roll_ave;
   }
   
   e_roll = roll_ave - roll;
@@ -181,18 +208,13 @@ void loop() {
   cntrl_pitch = kp*e_pitch + kd*e_pitch_dif + ki*e_pitch_int;
   cntrl_yaw = kp*e_yaw + kd*e_yaw_dif + ki*e_yaw_int;
 
-  command_m1 = ave_speed + ( cntrl_roll + cntrl_pitch);
-  command_m2 = ave_speed + (-cntrl_roll + cntrl_pitch);
-  command_m3 = ave_speed + (-cntrl_roll - cntrl_pitch);
-  command_m4 = ave_speed + ( cntrl_roll - cntrl_pitch);
-
-  Serial.print("CONTROLS: Roll Pitch Yaw: ");
-  Serial.print("\t");
-  Serial.print(cntrl_roll);
-  Serial.print("\t");
-  Serial.print(cntrl_pitch);
-  Serial.print("\t");
-  Serial.println(cntrl_yaw);
+//  Serial.print("CONTROLS: Roll Pitch Yaw: ");
+//  Serial.print("\t");
+//  Serial.print(cntrl_roll);
+//  Serial.print("\t");
+//  Serial.print(cntrl_pitch);
+//  Serial.print("\t");
+//  Serial.println(cntrl_yaw);
 
 /* Need to relate control to motor speeds symetrical about the drone frame
 
@@ -223,6 +245,20 @@ void loop() {
       
 */
 
+  command_m1 = ave_speed + (-cntrl_roll + cntrl_pitch);
+  command_m2 = ave_speed + (+cntrl_roll + cntrl_pitch);
+  command_m3 = ave_speed + (+cntrl_roll - cntrl_pitch);
+  command_m4 = ave_speed + (-cntrl_roll - cntrl_pitch);
+
+  Serial.print("COMMAND SPEEDS: M1 M2 M3 M4 ");
+  Serial.print("\t");
+  Serial.print(command_m1);
+  Serial.print("\t");
+  Serial.print(command_m2);
+  Serial.print("\t");
+  Serial.print(command_m3);
+  Serial.print("\t");
+  Serial.println(command_m4);
 
   delay(dT*1000); // delay 2 ms -- known timing for integral calculation
 
