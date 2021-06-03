@@ -216,6 +216,7 @@ void loop() {
       - Lower sensitivity at smaller error, higher sensitivity at lower error
       - Print out control values to get an idea for the mapping 
       - Mapping should be of the form +/- RPM * Weight where weight has a relation to control values
+      - Look to find what asymmetries there are in the motors --> drone seems to be tilting towards motor 3,4
       
 */
 
