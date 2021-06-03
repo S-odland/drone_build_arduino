@@ -15,6 +15,7 @@
         var b2;
         var b0clicked = true;
         var slider;
+        var cntrlGn;
 
         // This is called when the page finishes loading
         function init() {
@@ -22,6 +23,7 @@
             b1 = document.getElementById('killMotors');
             b2 = document.getElementById('changeRPM');
             slider = document.getElementById('myRange');
+            cntrlGn = document.getElementById('changeGain');
             wsConnect(url);
         }
 
@@ -49,7 +51,7 @@
             b0.disabled = false;
             b1.disabled = false;
             b2.disabled = false;
-            button.disabled = false;
+            cntrlGn.disabled = false;
             
             // Get the current state of the LED
             doSend("getRPM");
@@ -66,6 +68,7 @@
             b0.disabled = false;
             b1.disabled = false;
             b2.disabled = false;
+            cntrlGn.disabled = false;
             
             // Try to reconnect after a few seconds
             setTimeout(function() { wsConnect(url) }, 2000);
@@ -83,7 +86,7 @@
             // Print out our received message
             console.log("Received: " + evt.data);
 
-            writeToScreen("Average Motor Speed: " + evt.data + " RPM");
+            writeToScreen("" + evt.data);
             
             // // Update circle graphic with LED state
             // switch(evt.data) {
@@ -123,15 +126,14 @@
 
         function shutdown(){
             doSend("shutdown");
+            writeToScreen("Motor Speeds Reset To");
             doSend("getRPM");
             b1.disabled = false;
-            writeToScreen("Motor Speeds Reset");
-
         }
 
         function incBaseMotorSpeed(){
             doSend("incBaseMotorSpeed");
-            writeToScreen("Motor Speeds Increased");
+            writeToScreen("Motor Speeds Increased To");
             doSend("getRPM")
             b2.disabled = false;
             
@@ -139,15 +141,52 @@
 
         function decBaseMotorSpeed(){
             doSend("decBaseMotorSpeed");
-            writeToScreen("Motor Speeds Decreased");
+            writeToScreen("Motor Speeds Decreased To");
             doSend("getRPM")
             b2.disabled = false;
             
         }
 
-        slider.oninput = function() {
+        function sliderVal() {
+            writeToScreen("" + slider.value);
             console.log("Sending Slider Value");
             websocket.send(this.value);
+        }
+
+        function incKp(){
+            doSend("incKp");
+            writeToScreen("Kp Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKp(){
+            doSend("decKp");
+            writeToScreen("Kp Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKi(){
+            doSend("incKi");
+            writeToScreen("Ki Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKi(){
+            doSend("decKi");
+            writeToScreen("Ki Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKd(){
+            doSend("incKd");
+            writeToScreen("Kd Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKd(){
+            doSend("decKd");
+            writeToScreen("Kd Value:");
+            cntrlGn.disabled = false;
         }
 
         // Call the init function as soon as the page loads
@@ -161,6 +200,7 @@
     <div class="top-bar">
         drone.Follow
     </div>
+
     <div class="grid-container">
         <div class="grid-child">
             <div class="grid-container"style="background-color:blue;border-radius:25px;">
@@ -179,17 +219,19 @@
                     Reset Motor Speeds
                 </div>
                 <div class="grid-child-one">
-                    <button style="font-size:150%;border-radius:25px;background-color:red;align-self:center;width: 100%;color:white;height:100%;" id="killMotors"onclick = "shutdown()"></button>
+                    <button style="font-size:90%;border-radius:25px;background-color:red;align-self:center;width: 100%;color:white;height:100%;" id="killMotors"onclick = "shutdown()">1200 RPM</button>
                 </div>
             </div>
 
-            <p style="text-align:center;color:black">
+            <div class="grid-container"></div>
+
+            <!-- <p style="text-align:center;color:black">
                 Motor Speed Slider [1200-1600]
             </p>
 
             <div class="slidecontainer">
-                <input type="range" min="1200" max="1600" value="50" class="slider" id="myRange">
-            </div>
+                <input type="range" min="1200" max="1600" value="50" class="slider" id="myRange" oninput="sliderVal()">
+            </div> -->
 
             <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
                 
@@ -201,8 +243,57 @@
                 </div>
             </div> -->
 
+            <!-- <div class="grid-container"></div> -->
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKp()">+kp</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKp()">-kp</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKi()">+ki</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKi()">-ki</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKd()">+kd</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKd()">-kd</button>
+                </div>
+            </div>
+
         </div>
-        <div class="grid-child">        
+        <div class="grid-child">     
+            
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incBaseMotorSpeed()">+RPM</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decBaseMotorSpeed()">-RPM</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
             <p style="text-align:center;background-color:blue;padding-top:1%;">
                 <textarea style="width:97%;padding-bottom:1%;" id="msg" rows="20" cols="70"></textarea>
             </p>

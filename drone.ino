@@ -76,9 +76,9 @@ void setup() {
   client_setup();
   ESC_setup();
 
-  ki = 0.1;
-  kp = 3;
-  kd = 12;
+  ki = 0.05;
+  kp = 1.5;
+  kd = 5;
 
   a = 0.0921;
   thrust_const = pow(7.7141,-7);
@@ -249,7 +249,7 @@ void loop() {
   command_speed(command_m3,3);
   command_speed(command_m4,4);
 
-  Serial.println("Commands Sent to Motors");
+//  Serial.println("Commands Sent to Motors");
   
 }
 
@@ -408,11 +408,56 @@ void onWebSocketEvent(uint8_t client_num,
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
-      } else if (isdigit(payload) == 1) {
+      } else if (isdigit(*payload) == 1) {
 
-         ave_speed = payload;
+         ave_speed = *payload;
+         Serial.println(*payload);
+         Serial.println(ave_speed);
+      
+      } else if ( strcmp((char *)payload, "incKp") == 0 ) {
+
+        kp += 0.01;
+        sprintf(msg_buf, "%f", kp);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "decKp") == 0 ) {
+
+        kp -= 0.01;
+        sprintf(msg_buf, "%f", kp);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "incKi") == 0 ) {
+
+        ki += 0.01;
+        sprintf(msg_buf, "%f", ki);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "decKi") == 0 ) {
+
+        ki -= 0.01;
+        sprintf(msg_buf, "%f", ki);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "incKd") == 0 ) {
+
+        kd += 0.01;
+        sprintf(msg_buf, "%f", kd);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
+
+      } else if ( strcmp((char *)payload, "decKd") == 0 ) {
+
+        kd -= 0.01;
+        sprintf(msg_buf, "%f", kd);
+        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
+        webSocket.sendTXT(client_num, msg_buf);
       
       } else {
+        Serial.println(*payload);
         Serial.println("[%u] Message not recognized");
       }
       break;
@@ -452,70 +497,3 @@ void onPageNotFound(AsyncWebServerRequest *request) {
                   "] HTTP GET request of " + request->url());
   request->send(404, "text/plain", "Not found");
 }
-
-/************ IMU CALIBRATION ***********/
-//
-//  acc_x_ave = 0;
-//  acc_y_ave = 0;
-//  acc_z_ave = 0;
-//
-//  gyr_x_ave = 0;
-//  gyr_y_ave = 0;
-//  gyr_z_ave = 0;
-//
-//  Serial.println("Lay IMU flat");
-//  confirm = 0;
-//  
-//  while (not confirm){
-//    if (Serial.available() > 0){
-//      confirm = Serial.read();
-//    }
-//    delay(200);
-//  }
-//  
-//  confirm = 0;
-//  Serial.println("Calibrating...");
-//  Serial.println("");
-//  
-//  for (int i = 0; i < 1000; i++) {
-//    
-//    read_accelerometer((accel),(accel+1),(accel+2));
-//    read_gyroscope((gyro),(gyro+1),(gyro+2));
-//
-//// summing and normalizationg accelerometer readings from 16 bit word in two's complement
-//    acc_x_ave += (float) accel[0]/32768;
-//    acc_y_ave += (float) accel[1]/32768;
-//    acc_z_ave += (float) accel[2]/32768;
-//
-//// summing and normalizing gyroscope readings from 16 bit word in two's complement
-//    gyr_x_ave += (float) gyro[0]/32768;
-//    gyr_y_ave += (float) gyro[1]/32768;
-//    gyr_z_ave += (float) gyro[2]/32768;
-//    
-//  }
-//
-//// averaging summed accelerometer values
-//  acc_x_ave = (float) acc_x_ave/1000;
-//  acc_y_ave = (float) acc_y_ave/1000;
-//  acc_z_ave = (float) acc_z_ave/1000;
-//
-//// averaging summed gyroscope values
-//  gyr_x_ave = (float) gyr_x_ave/1000;
-//  gyr_y_ave = (float) gyr_y_ave/1000;
-//  gyr_z_ave = (float) gyr_z_ave/1000;
-//
-//  Serial.print("Accelerometer Values: ");
-//  Serial.print("\t");
-//  Serial.print(acc_x_ave);
-//  Serial.print("\t");
-//  Serial.print(acc_y_ave);
-//  Serial.print("\t");
-//  Serial.println(acc_z_ave);
-//
-//  Serial.print("Gyroscope Values: ");
-//  Serial.print("\t");
-//  Serial.print(gyr_x_ave);
-//  Serial.print("\t");
-//  Serial.print(gyr_y_ave);
-//  Serial.print("\t");
-//  Serial.println(gyr_z_ave);
