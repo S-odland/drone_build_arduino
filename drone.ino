@@ -61,9 +61,10 @@ float gyr_x_ave = 0,gyr_y_ave = 0,gyr_z_ave = 0;
 float Ax=0,Ay=0,Az=0,Gx=0,Gy=0,Gz=0;
 float dT = 0.002;
 float roll,pitch,yaw,pitch_accel,roll_accel,recipNorm,ki,kp,kd,roll_ave,pitch_ave,yaw_ave,cntrl_roll,cntrl_pitch,cntrl_yaw,a,filter_const,
-      thrust_const,ave_speed,command_m1,command_m2,command_m3,command_m4,e_roll,e_roll_prev,e_roll_dif,e_roll_int,e_pitch,e_pitch_prev,e_pitch_int,
+      thrust_const,command_m1,command_m2,command_m3,command_m4,e_roll,e_roll_prev,e_roll_dif,e_roll_int,e_pitch,e_pitch_prev,e_pitch_int,
       e_pitch_dif,e_yaw,e_yaw_prev,e_yaw_dif,e_yaw_int;
-int rpm_1 = 0, rpm_2 = 0, rpm_3 = 0, rpm_4 = 0;
+bool motorOn = 0;
+int ave_speed = 1100;
 /**************** SETUP *****************/
 
 void setup() {
@@ -137,84 +138,57 @@ void setup() {
 /**************** LOOP *****************/
 
 void loop() {
-
-  thrust_const = 0.5;
   
-  read_accelerometer((accel),(accel+1),(accel+2));
-  read_gyroscope((gyro),(gyro+1),(gyro+2));
-
-// low pass filter on accelerometer readings
-  Ax = (float) Ax + 0.1*(accel[0] - Ax);
-  Ay = (float) Ay + 0.1*(accel[1] - Ay);
-  Az = (float) Az + 0.1*(accel[2] - Az);
-
-  pitch_accel = 180 * atan2(Ax,sqrt(Ay * Ay + Az * Az))/M_PI;
-  roll_accel = 180 * atan2(Ay,sqrt(Ax * Ax + Az * Az))/M_PI;
-
-// integrating gyro values to git roll pitch and yaw
-  roll = (float) gyro[0]*0.0174533 * dT;
-  pitch = (float) gyro[1]*0.0174533  * dT;
-  yaw = (float) gyro[2]*0.0174533  * dT;
-
-  pitch = (1-thrust_const)*pitch + thrust_const*pitch_accel;
-  roll = (1-thrust_const)*pitch + thrust_const*roll_accel;
-
-//  Serial.print("Roll Pitch Yaw: ");
-//  Serial.print("\t");
-//  Serial.print(roll);
-//  Serial.print("\t");
-//  Serial.print(pitch);
-//  Serial.print("\t");
-//  Serial.println(yaw);
-
   webSocket.loop();
 
+  if (motorOn) {
+    
+    thrust_const = 0.5;
+      
+    read_accelerometer((accel),(accel+1),(accel+2));
+    read_gyroscope((gyro),(gyro+1),(gyro+2));
   
-  if (roll < 0 && roll >= -1.59) {
-    roll_ave = -roll_ave;
-  } else if (roll >= 0 && roll <= 1.59) {
-    roll_ave = roll_ave;
-  }
+  // low pass filter on accelerometer readings
+    Ax = (float) Ax + 0.1*(accel[0] - Ax);
+    Ay = (float) Ay + 0.1*(accel[1] - Ay);
+    Az = (float) Az + 0.1*(accel[2] - Az);
   
-  e_roll = roll_ave - roll;
-  e_pitch = pitch_ave - pitch;
-  e_yaw = yaw_ave - yaw;
-
-  e_roll_dif = e_roll - e_roll_prev;
-  e_roll_int += e_roll*dT; 
-  e_roll_prev = e_roll;
-
-//  if (e_roll_int >= 50) {
-//    e_roll_int = 0;
-//  }
-
-  e_pitch_dif = e_pitch - e_pitch_prev;
-  e_pitch_int += e_pitch*dT; 
-  e_pitch_prev = e_pitch;
-
-//  if (e_pitch_int >= 50) {
-//    e_pitch_int = 0;
-//  }
+    pitch_accel = 180 * atan2(Ax,sqrt(Ay * Ay + Az * Az))/M_PI;
+    roll_accel = 180 * atan2(Ay,sqrt(Ax * Ax + Az * Az))/M_PI;
   
-  e_yaw_dif = e_yaw - e_yaw_prev;
-  e_yaw_int += e_yaw*dT; 
-  e_yaw_prev = e_yaw;
-
-//  if (abs(e_yaw_int) >= 50) {
-//    e_yaw_int = ;
-//  }
-
-  cntrl_roll = kp*e_roll + kd*e_roll_dif + ki*e_roll_int;
-  cntrl_pitch = kp*e_pitch + kd*e_pitch_dif + ki*e_pitch_int;
-  cntrl_yaw = kp*e_yaw + kd*e_yaw_dif + ki*e_yaw_int;
-
-//  Serial.print("CONTROLS: Roll Pitch Yaw: ");
-//  Serial.print("\t");
-//  Serial.print(cntrl_roll);
-//  Serial.print("\t");
-//  Serial.print(cntrl_pitch);
-//  Serial.print("\t");
-//  Serial.println(cntrl_yaw);
+  // integrating gyro values to git roll pitch and yaw
+    roll = (float) gyro[0]*0.0174533 * dT;
+    pitch = (float) gyro[1]*0.0174533  * dT;
+    yaw = (float) gyro[2]*0.0174533  * dT;
+  
+    pitch = (1-thrust_const)*pitch + thrust_const*pitch_accel;
+    roll = (1-thrust_const)*pitch + thrust_const*roll_accel;
+  
+    if (roll < 0 && roll >= -1.59) {
+      roll_ave = -roll_ave;
+    } else if (roll >= 0 && roll <= 1.59) {
+      roll_ave = roll_ave;
+    }
+    
+    e_roll = roll_ave - roll;
+    e_pitch = pitch_ave - pitch;
+    e_yaw = yaw_ave - yaw;
+  
+    e_roll_dif = e_roll - e_roll_prev;
+    e_roll_int += e_roll*dT; 
+    e_roll_prev = e_roll;
+  
+    e_pitch_dif = e_pitch - e_pitch_prev;
+    e_pitch_int += e_pitch*dT; 
+    e_pitch_prev = e_pitch;
+    
+    e_yaw_dif = e_yaw - e_yaw_prev;
+    e_yaw_int += e_yaw*dT; 
+    e_yaw_prev = e_yaw;
+    
+    cntrl_roll = kp*e_roll + kd*e_roll_dif + ki*e_roll_int;
+    cntrl_pitch = kp*e_pitch + kd*e_pitch_dif + ki*e_pitch_int;
+    cntrl_yaw = kp*e_yaw + kd*e_yaw_dif + ki*e_yaw_int;
 
 /* Need to relate control to motor speeds symetrical about the drone frame
 
@@ -250,6 +224,16 @@ void loop() {
   command_m3 = ave_speed + (+cntrl_roll - cntrl_pitch);
   command_m4 = ave_speed + (-cntrl_roll - cntrl_pitch);
 
+  delay(dT*1000); // delay 2 ms -- known timing for integral calculation
+
+    
+  } else {
+    command_m1 = 0;
+    command_m2 = 0;
+    command_m3 = 0;
+    command_m4 = 0;
+  }
+
   Serial.print("COMMAND SPEEDS: M1 M2 M3 M4 ");
   Serial.print("\t");
   Serial.print(command_m1);
@@ -260,8 +244,13 @@ void loop() {
   Serial.print("\t");
   Serial.println(command_m4);
 
-  delay(dT*1000); // delay 2 ms -- known timing for integral calculation
+  command_speed(command_m1,1);
+  command_speed(command_m2,2);
+  command_speed(command_m3,3);
+  command_speed(command_m4,4);
 
+  Serial.println("Commands Sent to Motors");
+  
 }
 
 /************** HELPERS ***************/
@@ -387,92 +376,42 @@ void onWebSocketEvent(uint8_t client_num,
       Serial.printf("[%u] Received text: %s\n", client_num, payload);
 
       // Toggle LED
-      if ( strcmp((char *)payload, "motor_1_up") == 0 ) {
+      if ( strcmp((char *)payload, "enMotors") == 0 ) {
         
-        rpm_1 += 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_1,1);
+        motorOn = 1;
+        Serial.printf("Motors Enabled");
 
       // Report which led is on 
-      } else if ( strcmp((char *)payload, "motor_1_down") == 0 ) {
+      } else if ( strcmp((char *)payload, "disMotors") == 0 ) {
 
-        rpm_1 -= 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_1,1);
+        motorOn = 0;
+        Serial.printf("Motors Disabled");
         
-      } else if ( strcmp((char *)payload, "motor_2_up") == 0 ) {
+      } else if ( strcmp((char *)payload, "incBaseMotorSpeed") == 0 ) {
 
-        rpm_2 += 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_2,2);
+        ave_speed += 5;
+        Serial.printf("Increasing baseline motor speed by 1 RPM");
         
-      } else if ( strcmp((char *)payload, "motor_2_down") == 0 ) {
+      } else if ( strcmp((char *)payload, "decBaseMotorSpeed") == 0 ) {
 
-        rpm_2 -= 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_2,2);
-
-      } else if ( strcmp((char *)payload, "motor_3_up") == 0 ) {
-
-        rpm_3 += 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_3,3);
-        
-      } else if ( strcmp((char *)payload, "motor_3_down") == 0 ) {
-
-        rpm_3 -= 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_3,3);
-
-      } else if ( strcmp((char *)payload, "motor_4_up") == 0) {
-
-        rpm_4 += 5;
-        Serial.printf("Incrementing RPM by 5");
-        command_speed(rpm_4,4);
-
-      } else if ( strcmp((char *)payload, "motor_4_down") == 0) {
-        
-        rpm_4 -= 5;
-        Serial.printf("Decrementing RPM by 5");
-        command_speed(rpm_4,4);
+        ave_speed -= 5;
+        Serial.printf("Decreasing baseline motor speed by 1 RPM");
 
       } else if ( strcmp((char *)payload, "shutdown") == 0) {
         
-        rpm_1 = 1090;
-        rpm_2 = 1090;
-        rpm_3 = 1090;
-        rpm_4 = 1090;
+        ave_speed = 1200;
         Serial.printf("Shutting off motors");
-        command_speed(rpm_1,1);
-        command_speed(rpm_2,2);
-        command_speed(rpm_3,3);
-        command_speed(rpm_4,4);
         
-      } else if ( strcmp((char *)payload, "getRPM_1") == 0 ) {
+      } else if ( strcmp((char *)payload, "getRPM") == 0 ) {
         
-        sprintf(msg_buf, "%d", rpm_1);
+        sprintf(msg_buf, "%d", ave_speed);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
-      } else if ( strcmp((char *)payload, "getRPM_2") == 0 ) {
-        
-        sprintf(msg_buf, "%d", rpm_2);
-        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
-        webSocket.sendTXT(client_num, msg_buf);
+      } else if (isdigit(payload) == 1) {
 
-      } else if ( strcmp((char *)payload, "getRPM_3") == 0 ) {
-        
-        sprintf(msg_buf, "%d", rpm_3);
-        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
-        webSocket.sendTXT(client_num, msg_buf);
-
-      } else if ( strcmp((char *)payload, "getRPM_4") == 0 ) {
-        
-        sprintf(msg_buf, "%d", rpm_4);
-        Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
-        webSocket.sendTXT(client_num, msg_buf);
-
-      // Message not recognized
+         ave_speed = payload;
+      
       } else {
         Serial.println("[%u] Message not recognized");
       }

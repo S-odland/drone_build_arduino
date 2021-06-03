@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <head>
@@ -13,12 +14,14 @@
         var b1;
         var b2;
         var b0clicked = true;
+        var slider;
 
         // This is called when the page finishes loading
         function init() {
             b0 = document.getElementById('enMotors');
             b1 = document.getElementById('killMotors');
             b2 = document.getElementById('changeRPM');
+            slider = document.getElementById('myRange');
             wsConnect(url);
         }
 
@@ -122,12 +125,12 @@
             doSend("shutdown");
             doSend("getRPM");
             b1.disabled = false;
-            writeToScreen("Motor Speeds Reset to 1150 RPM");
+            writeToScreen("Motor Speeds Reset");
 
         }
 
         function incBaseMotorSpeed(){
-            doSend("incAveMotorSpeed");
+            doSend("incBaseMotorSpeed");
             writeToScreen("Motor Speeds Increased");
             doSend("getRPM")
             b2.disabled = false;
@@ -135,11 +138,16 @@
         }
 
         function decBaseMotorSpeed(){
-            doSend("decAveMotorSpeed");
+            doSend("decBaseMotorSpeed");
             writeToScreen("Motor Speeds Decreased");
             doSend("getRPM")
             b2.disabled = false;
             
+        }
+
+        slider.oninput = function() {
+            console.log("Sending Slider Value");
+            websocket.send(this.value);
         }
 
         // Call the init function as soon as the page loads
@@ -171,20 +179,27 @@
                     Reset Motor Speeds
                 </div>
                 <div class="grid-child-one">
-                    <button style="font-size:150%;border-radius:25px;background-color:red;align-self:center;width: 100%;color:white;height:150%;" id="killMotors"onclick = "shutdown()"></button>
+                    <button style="font-size:150%;border-radius:25px;background-color:red;align-self:center;width: 100%;color:white;height:100%;" id="killMotors"onclick = "shutdown()"></button>
                 </div>
             </div>
 
-            <div class="grid-container"></div>
+            <p style="text-align:center;color:black">
+                Motor Speed Slider [1200-1600]
+            </p>
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="slidecontainer">
+                <input type="range" min="1200" max="1600" value="50" class="slider" id="myRange">
+            </div>
+
+            <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
                 <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:150%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:white;height:150%;" id="killMotors"onclick = "incBaseMotorSpeed()"></button>
+                    <button style="font-size:150%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:white;height:150%;" id="changeRPM"onclick = "incBaseMotorSpeed()"></button>
                 </div>
                 <div class="grid-child-one">
                     <button style="font-size:150%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:white;height:150%;" id="changeRPM"onclick = "decBaseMotorSpeed()"></button>
                 </div>
-            </div>
+            </div> -->
 
         </div>
         <div class="grid-child">        
@@ -194,5 +209,3 @@
         </div>
     </div>
 </body>
-
-

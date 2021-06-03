@@ -120,9 +120,10 @@ input {
     background-color: lightgreen;
     border-radius: 50px;
     outline: none;
+    z-index: 0;
 }
 
-input:before {
+/* input:before {
     content: "";
     position: absolute;
     top: 0;
@@ -131,13 +132,51 @@ input:before {
     width: 50%;
     background-color: navy;
     border-radius: 50px;
-}
+    z-index: 0;
+} */
 
 input:checked {
     background-color: red;
-
+    z-index: 0;
 }
 
 input:checked:before {
     transform: translate(100%);
+    z-index: 0;
+}
+
+.slidecontainer {
+    width: 100%; /* Width of the outside container */
+    z-index: 0;
+}
+
+/* The slider itself */
+.slider {
+    -webkit-appearance: none;  /* Override default CSS styles */
+    appearance: none;
+    width: 100%; /* Full-width */
+    height: 25px; /* Specified height */
+    background: blue; /* Grey background */
+    outline: none; /* Remove outline */
+    z-index: 0;
+}
+
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Override default look */
+    appearance: circle;
+    width: 25px; /* Set a specific slider handle width */
+    height: 25px; /* Slider handle height */
+    border-radius: 50%;
+    background: lightgreen; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+    z-index: 3;
+}
+
+.slider::-moz-range-thumb {
+    width: 25px; /* Set a specific slider handle width */
+    height: 25px; /* Slider handle height */
+    background: lightgreen; /* Green background */
+    cursor: pointer; /* Cursor on hover */
+    z-index: 3;
 }
