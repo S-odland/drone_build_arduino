@@ -162,7 +162,7 @@ void loop() {
     yaw = (float) gyro[2]*0.0174533  * dT;
   
     pitch = (1-thrust_const)*pitch + thrust_const*pitch_accel;
-    roll = (1-thrust_const)*pitch + thrust_const*roll_accel;
+    roll = (1-thrust_const)*roll + thrust_const*roll_accel;
   
     if (roll < 0 && roll >= -1.59) {
       roll_ave = -roll_ave;
