@@ -134,7 +134,7 @@
         function incBaseMotorSpeed(){
             doSend("incBaseMotorSpeed");
             writeToScreen("Motor Speeds Increased To");
-            doSend("getRPM")
+            doSend("getRPM");
             b2.disabled = false;
             
         }
@@ -142,9 +142,65 @@
         function decBaseMotorSpeed(){
             doSend("decBaseMotorSpeed");
             writeToScreen("Motor Speeds Decreased To");
-            doSend("getRPM")
+            doSend("getRPM");
             b2.disabled = false;
             
+        }
+
+        function incMotor1() {
+            doSend("incMotor1");
+            writeToScreen("Motor1 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function decMotor1() {
+            doSend("decMotor1");
+            writeToScreen("Motor1 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function incMotor2() {
+            doSend("incMotor2");
+            writeToScreen("Motor2 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function decMotor2() {
+            doSend("decMotor2");
+            writeToScreen("Motor2 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function incMotor3() {
+            doSend("incMotor3");
+            writeToScreen("Motor3 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function decMotor3() {
+            doSend("decMotor3");
+            writeToScreen("Motor3 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function incMotor4() {
+            doSend("incMotor4");
+            writeToScreen("Motor4 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
+        }
+
+        function decMotor4() {
+            doSend("decMotor4");
+            writeToScreen("Motor4 Speed: ");
+            //doSend("getRPM1");
+            b2.disable = false;
         }
 
         function sliderVal() {
@@ -225,13 +281,13 @@
 
             <div class="grid-container"></div>
 
-            <p style="text-align:center;color:black">
+            <!-- <p style="text-align:center;color:black">
                 Motor Speed Slider [1200-1600]
             </p>
 
             <div class="slidecontainer">
                 <input type="range" min="1200" max="1600" value="50" class="slider" id="myRange" oninput="sliderVal()">
-            </div>
+            </div> -->
 
             <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
                 
@@ -245,7 +301,7 @@
 
             <!-- <div class="grid-container"></div> -->
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
                     <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKp()">+kp</button>
@@ -277,7 +333,7 @@
                 <div class="grid-child-one">
                     <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKd()">-kd</button>
                 </div>
-            </div>
+            </div> -->
 
         </div>
         <div class="grid-child">     
@@ -291,6 +347,54 @@
                     <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decBaseMotorSpeed()">-RPM</button>
                 </div>
             </div>
+
+            <!-- <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor1()">+RPM 1</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor1()">-RPM 1</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor2()">+RPM 2</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor2()">-RPM 2</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor3()">+RPM 3</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor3()">-RPM 3</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor4()">+RPM 4</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor4()">-RPM 4</button>
+                </div>
+            </div> -->
 
             <div class="grid-container"></div>
 
