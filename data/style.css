@@ -123,7 +123,7 @@ input {
     z-index: 0;
 }
 
-input:before {
+/* input:before {
     content: "";
     position: absolute;
     top: 0;
@@ -133,7 +133,7 @@ input:before {
     background-color: navy;
     border-radius: 50px;
     z-index: 0;
-}
+} */
 
 input:checked {
     background-color: red;
@@ -148,6 +148,11 @@ input:checked:before {
 .slidecontainer {
     width: 100%; /* Width of the outside container */
     z-index: 0;
+}
+
+.textInput {
+    width:100%;
+    color:white;
 }
 
 /* The slider itself */

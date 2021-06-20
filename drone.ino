@@ -144,9 +144,9 @@ void setup() {
     read_gyroscope((gyro),(gyro+1),(gyro+2));
 
     // low pass filter on accelerometer readings
-    Ax = (float) Ax + 0.025*(accel[0] - Ax);
-    Ay = (float) Ay + 0.025*(accel[1] - Ay);
-    Az = (float) Az + 0.025*(accel[2] - Az);
+    Ax = (float) Ax + 0.01*(accel[0] - Ax);
+    Ay = (float) Ay + 0.01*(accel[1] - Ay);
+    Az = (float) Az + 0.01*(accel[2] - Az);
   
     pitch_accel = 180 * atan2(Ax,sqrt(Ay * Ay + Az * Az))/M_PI;
     roll_accel = 180 * atan2(Ay,sqrt(Ax * Ax + Az * Az))/M_PI;
