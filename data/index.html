@@ -16,6 +16,7 @@
         var b0clicked = true;
         var slider;
         var cntrlGn;
+        var exp
 
         // This is called when the page finishes loading
         function init() {
@@ -24,6 +25,7 @@
             b2 = document.getElementById('changeRPM');
             slider = document.getElementById('myRange');
             cntrlGn = document.getElementById('changeGain');
+            exp = document.getElementById('export');
             wsConnect(url);
         }
 
@@ -244,6 +246,52 @@
             writeToScreen("Kd Value:");
             cntrlGn.disabled = false;
         }
+        
+        // function exportData() {
+        //     doSend("exportData");
+        //     exp.disabled = false;
+        // }
+
+        // function exportToCsv(filename, rows) {
+        //     var processRow = function (row) {
+        //         var finalVal = '';
+        //         for (var j = 0; j < row.length; j++) {
+        //             var innerValue = row[j] === null ? '' : row[j].toString();
+        //             if (row[j] instanceof Date) {
+        //                 innerValue = row[j].toLocaleString();
+        //             };
+        //             var result = innerValue.replace(/"/g, '""');
+        //             if (result.search(/("|,|\n)/g) >= 0)
+        //                 result = '"' + result + '"';
+        //             if (j > 0)
+        //                 finalVal += ',';
+        //             finalVal += result;
+        //         }
+        //         return finalVal + '\n';
+        //     };
+
+        //     var csvFile = '';
+        //     for (var i = 0; i < rows.length; i++) {
+        //         csvFile += processRow(rows[i]);
+        //     }
+
+        //     var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+        //     if (navigator.msSaveBlob) { // IE 10+
+        //         navigator.msSaveBlob(blob, filename);
+        //     } else {
+        //         var link = document.createElement("a");
+        //         if (link.download !== undefined) { // feature detection
+        //             // Browsers that support HTML5 download attribute
+        //             var url = URL.createObjectURL(blob);
+        //             link.setAttribute("href", url);
+        //             link.setAttribute("download", filename);
+        //             link.style.visibility = 'hidden';
+        //             document.body.appendChild(link);
+        //             link.click();
+        //             document.body.removeChild(link);
+        //         }
+        //     }
+        // }
 
         // Call the init function as soon as the page loads
         window.addEventListener("load", init, false);
@@ -301,7 +349,7 @@
 
             <!-- <div class="grid-container"></div> -->
 
-            <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="grid-container"style="background-color:blue;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
                     <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKp()">+kp</button>
@@ -333,7 +381,7 @@
                 <div class="grid-child-one">
                     <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKd()">-kd</button>
                 </div>
-            </div> -->
+            </div>
 
         </div>
         <div class="grid-child">     
@@ -348,7 +396,7 @@
                 </div>
             </div>
 
-            <!-- <div class="grid-container"></div>
+            <div class="grid-container"></div>
 
             <div class="grid-container"style="background-color:blue;border-radius:25px;">
                 
@@ -394,7 +442,7 @@
                 <div class="grid-child-one">
                     <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor4()">-RPM 4</button>
                 </div>
-            </div> -->
+            </div>
 
             <div class="grid-container"></div>
 

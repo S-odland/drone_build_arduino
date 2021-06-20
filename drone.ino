@@ -8,6 +8,9 @@
 #include <ESP32Servo.h> // ESP32Servo library installed by Library Manager
 #include "ESC.h" // RC_ESP library installed by Library Manager
 #include <math.h>
+#include <iostream>
+#include <fstream>
+
 
 /************** PIN DEFINITIONS *************/
 
@@ -33,7 +36,7 @@ const int dns_port = 53;
 const int http_port = 80;
 const int ws_port = 1337;
 const int led_pin = 15;
-const int MOVING_AVERAGE_SIZE = 15;
+const int MOVING_AVERAGE_SIZE = 20;
 
 /************* OBJECT INSTANCES ************/
 
@@ -60,7 +63,7 @@ bool confirm;
 float acc_x_ave = 0,acc_y_ave = 0,acc_z_ave = 0;
 float gyr_x_ave = 0,gyr_y_ave = 0,gyr_z_ave = 0;
 float Ax=0,Ay=0,Az=0,Gx=0,Gy=0,Gz=0;
-float dT = 0.002;
+float dT = 0.01;
 float roll,pitch,yaw,pitch_accel,roll_accel,recipNorm,ki,kp,kd,roll_ave,pitch_ave,yaw_ave,cntrl_roll,cntrl_pitch,cntrl_yaw,a,filter_const,
       thrust_const,command_m1,command_m2,command_m3,command_m4,e_roll,e_roll_prev,e_roll_dif,e_roll_int,e_pitch,e_pitch_prev,e_pitch_int,
       e_pitch_dif,e_yaw,e_yaw_prev,e_yaw_dif,e_yaw_int;
@@ -69,17 +72,53 @@ int ave_speed = 1100;
 float sum_roll = 0;
 float sum_pitch = 0;
 float sum_yaw = 0;
+float sum_ax = 0;
+float sum_ay = 0;
+float sum_az = 0;
 float readings_roll[MOVING_AVERAGE_SIZE];
 float readings_pitch[MOVING_AVERAGE_SIZE];
 float readings_yaw[MOVING_AVERAGE_SIZE];
+float readings_ax[MOVING_AVERAGE_SIZE];
+float readings_ay[MOVING_AVERAGE_SIZE];
+float readings_az[MOVING_AVERAGE_SIZE];
 float averaged_roll = 0;
 float averaged_pitch = 0;
 float averaged_yaw = 0;
+float averaged_ax = 0;
+float averaged_ay = 0;
+float averaged_az = 0;
 int ind;
 int m1_speed = 0;
 int m2_speed = 0;
 int m3_speed = 0;
+float roll_fus;
+float pitch_fus;
 int m4_speed = 0;
+//float rawData_roll[1000] = {0};
+//float rawData_pitch[1000] = {0};
+//float rawData_yaw[1000] = {0};
+//float lowPassData_roll[1000] = {0};
+//float lowPassData_pitch[1000] = {0};
+//float lowPassData_yaw[1000] = {0};
+//float rawRPYdata_roll[1000] = {0};
+//float rawRPYdata_pitch[1000] = {0};
+//float rawRPYdata_yaw[1000] = {0};
+//float fusionData_roll[1000] = {0};
+//float fusionData_pitch[1000] = {0};
+//float movingAverageData_roll[1000] = {0};
+//float movingAverageData_pitch[1000] = {0};
+//float errorData_roll[1000] = {0};
+//float errorData_pitch[1000] = {0};
+//float errorData_yaw[1000] = {0};
+//float controllerData_roll[1000] = {0};
+//float controllerData_pitch[1000] = {0};
+//float controllerData_yaw[1000] = {0};
+//float command_m1S[1000] = {0};
+//float command_m2S[1000] = {0};
+//float command_m3S[1000] = {0};
+//float command_m4S[1000] = {0};
+int i = 0;
+
 /**************** SETUP *****************/
 
 void setup() {
@@ -152,9 +191,9 @@ void setup() {
   pitch = 0;
   yaw = 0;
 
-  ki = 3;
-  kp = 6;
-  kd = 30;
+  ki = 1;
+  kp = 2;
+  kd = 3;
   
 
 }
@@ -164,63 +203,69 @@ void setup() {
 void loop() {
   
   webSocket.loop();
-
+  
   if (motorOn) {
     
-    thrust_const = 0.1;
-
     // read IMU data
     read_accelerometer((accel),(accel+1),(accel+2));
     read_gyroscope((gyro),(gyro+1),(gyro+2));
     
     // low pass filter on accelerometer readings
-    Ax = (float) Ax + 0.05*(accel[0] - Ax);
-    Ay = (float) Ay + 0.05*(accel[1] - Ay);
-    Az = (float) Az + 0.05*(accel[2] - Az);
+    Ax = (float) Ax + 0.01*(accel[0] - Ax);
+    Ay = (float) Ay + 0.01*(accel[1] - Ay);
+    Az = (float) Az + 0.01*(accel[2] - Az);
 
+//    sum_ax = sum_ax - readings_ax[ind];
+//    sum_ay = sum_ay - readings_ay[ind];
+//    sum_az = sum_az - readings_az[ind];
+//
+//    sum_ax = sum_ax + Ax;
+//    sum_ay = sum_ay + Ay;
+//    sum_az = sum_az + Az;
+//
+//    readings_ax[ind] = Ax;
+//    readings_ay[ind] = Ay;
+//    readings_az[ind] = Az;
+//
+//    ind += 1;
+//    ind = ind % MOVING_AVERAGE_SIZE;  
+//
+//    averaged_ax = sum_ax/MOVING_AVERAGE_SIZE;
+//    averaged_ay = sum_ay/MOVING_AVERAGE_SIZE;
+//    averaged_az = sum_az/MOVING_AVERAGE_SIZE;
+
+    averaged_ax = Ax;
+    averaged_ay = Ay;
+    averaged_az = Az;
+    
     // calculate roll + pitch from accelerometer data
-    pitch_accel = 180 * atan2(Ax,sqrt(Ay * Ay + Az * Az))/M_PI;
-    roll_accel = 180 * atan2(Ay,sqrt(Ax * Ax + Az * Az))/M_PI;
+    pitch_accel = 180 * atan2(averaged_ax,sqrt(averaged_ay * averaged_ay + averaged_az * averaged_az))/M_PI;
+    roll_accel = 180 * atan2(averaged_ay,sqrt(averaged_ax * averaged_ax + averaged_az * averaged_az))/M_PI;
   
     // integrating gyro values to git roll pitch and yaw
-    
     roll = (float) gyro[0]*0.0174533 * dT;
     pitch = (float) gyro[1]*0.0174533  * dT;
     yaw = (float) gyro[2]*0.0174533  * dT;
 
     // sensor fusion , thrust_const = 0.1
-    pitch = (1-thrust_const)*pitch + thrust_const*pitch_accel;
-    roll = (1-thrust_const)*roll + thrust_const*roll_accel;
+    pitch_fus = (1-thrust_const)*pitch + thrust_const*pitch_accel;
+    roll_fus = (1-thrust_const)*roll + thrust_const*roll_accel;
 
-    // moving average calculations, MOVING_AVERAGE_SIZE = 15
+    // moving average calculations, MOVING_AVERAGE_SIZE = 25
     sum_roll = sum_roll - readings_roll[ind];   
     sum_pitch = sum_pitch - readings_pitch[ind];
         
-    readings_pitch[ind] = pitch;  
-    readings_roll[ind] = roll;     
+    readings_pitch[ind] = pitch_fus;  
+    readings_roll[ind] = roll_fus;     
      
-    sum_roll = sum_roll + roll;
-    sum_pitch = sum_pitch + pitch;
+    sum_roll = sum_roll + roll_fus;
+    sum_pitch = sum_pitch + pitch_fus;
 
     ind += 1;
     ind = ind % MOVING_AVERAGE_SIZE;   
 
     averaged_roll = sum_roll/MOVING_AVERAGE_SIZE;    
     averaged_pitch = sum_pitch/MOVING_AVERAGE_SIZE;  
-      
-//    if (roll < 0 && roll >= -1.59) {
-//      roll_ave = -roll_ave;
-//    } else if (roll >= 0 && roll <= 1.59) {
-//      roll_ave = roll_ave;
-//    }
-
-//    Serial.print("COMMAND SPEEDS: M1 M2 M3 M4 ");
-//    Serial.print("\t");
-//    Serial.print(averaged_roll);
-//    Serial.print("\t");
-//    Serial.print(averaged_pitch);
-//    Serial.print("\t");
-//    Serial.println(yaw);
     
     e_roll = roll_ave - averaged_roll;
     e_pitch = pitch_ave - averaged_pitch;
@@ -269,12 +314,12 @@ void loop() {
 //    Serial.println(e_yaw_int);
 
 //    Serial.print("COMMAND SPEEDS: M1 M2 M3 M4 ");
-    Serial.print("\t");
-    Serial.print(cntrl_roll);
-    Serial.print("\t");
-    Serial.print(cntrl_pitch);
-    Serial.print("\t");
-    Serial.println(cntrl_yaw);
+//    Serial.print("\t");
+//    Serial.print(cntrl_roll);
+//    Serial.print("\t");
+//    Serial.print(cntrl_pitch);
+//    Serial.print("\t");
+//    Serial.println(cntrl_yaw);
 
 /* Need to relate control to motor speeds symetrical about the drone frame
 
@@ -294,33 +339,65 @@ void loop() {
 
         NEGATIVE PITCH :: MOTOR 1,2 UP, MOTOR 3,4 DOWN
         POSITIVE PITCH :: MOTOR 3,4 UP, MOTOR 1,2 DOWN
-
-        MOTOR 1: 1355 RPM
-        MOTOR 2: 1395 RPM
-        MOTOR 3: 1625 RPM
-        MOTOR 4: 1625 RPM
-
-    FUNCTION TO MAP ANGLE CONTROLS TO MOTOR SPEEDS:
-
-      - Have average speed --> set by user through web interface
-      - Lower sensitivity at smaller error, higher sensitivity at lower error
-      - Print out control values to get an idea for the mapping 
-      - Mapping should be of the form +/- RPM * Weight where weight has a relation to control values
-      - Look to find what asymmetries there are in the motors --> drone seems to be tilting towards motor 3,4
       
 */
 
-//  command_m1 = ave_speed + (-cntrl_roll + cntrl_pitch);
-//  command_m2 = ave_speed + (+cntrl_roll + cntrl_pitch);
-//  command_m3 = ave_speed + (+cntrl_roll - cntrl_pitch);
-//  command_m4 = ave_speed + (-cntrl_roll - cntrl_pitch);
-
-  command_m1 = m1_speed + (-cntrl_roll + cntrl_pitch);
-  command_m2 = m2_speed + (+cntrl_roll + cntrl_pitch);
-  command_m3 = m3_speed + (+cntrl_roll - cntrl_pitch);
-  command_m4 = m4_speed + (-cntrl_roll - cntrl_pitch);
-
-  delay(dT*1000); // delay 2 ms -- known timing for integral calculation
+    command_m1 = m1_speed + (-cntrl_roll + cntrl_pitch);
+    command_m2 = m2_speed + (+cntrl_roll + cntrl_pitch);
+    command_m3 = m3_speed + (+cntrl_roll - cntrl_pitch);
+    command_m4 = m4_speed + (-cntrl_roll - cntrl_pitch);
+  
+    Serial.print(accel[0]);
+    Serial.print("\t");
+    Serial.print(accel[1]);
+    Serial.print("\t");
+    Serial.print(accel[2]);
+    Serial.print("\t");
+    Serial.print(Ax);
+    Serial.print("\t");
+    Serial.print(Ay);
+    Serial.print("\t");
+    Serial.print(Az);
+    Serial.print("\t");
+    Serial.print(roll_accel);
+    Serial.print("\t");
+    Serial.print(pitch_accel);
+    Serial.print("\t");
+    Serial.print(yaw);
+    Serial.print("\t");
+//    Serial.print(averaged_ax);
+//    Serial.print("\t");
+//    Serial.print(averaged_ay);
+//    Serial.print("\t");
+//    Serial.print(averaged_az);
+//    Serial.print("\t");
+    Serial.print(roll_fus);
+    Serial.print("\t");
+    Serial.print(pitch_fus);
+    Serial.print("\t");
+    Serial.print(averaged_roll);
+    Serial.print("\t");
+    Serial.println(averaged_pitch);
+//    Serial.print("\t");
+//    Serial.print(e_roll);
+//    Serial.print("\t");
+//    Serial.print(e_pitch);
+//    Serial.print("\t");
+//    Serial.print(e_yaw);
+//    Serial.print("\t");
+//    Serial.print(cntrl_roll);
+//    Serial.print("\t");
+//    Serial.print(cntrl_pitch);
+//    Serial.print("\t");
+//    Serial.print(cntrl_yaw);
+//    Serial.print("\t");
+//    Serial.print(command_m1);
+//    Serial.print("\t");
+//    Serial.print(command_m2);
+//    Serial.print("\t");
+//    Serial.print(command_m3);
+//    Serial.print("\t");
+//    Serial.println(command_m4);
 
     
   } else {
@@ -345,7 +422,10 @@ void loop() {
   command_speed(command_m3,3);
   command_speed(command_m4,4);
 
+
 //  Serial.println("Commands Sent to Motors");
+
+  // delay(dT*1000); // delay 2 ms -- known timing for integral calculation
   
 }
 
@@ -590,42 +670,42 @@ void onWebSocketEvent(uint8_t client_num,
       
       } else if ( strcmp((char *)payload, "incKp") == 0 ) {
 
-        kp += 0.01;
+        kp += 0.1;
         sprintf(msg_buf, "%f", kp);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
       } else if ( strcmp((char *)payload, "decKp") == 0 ) {
 
-        kp -= 0.01;
+        kp -= 0.1;
         sprintf(msg_buf, "%f", kp);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
       } else if ( strcmp((char *)payload, "incKi") == 0 ) {
 
-        ki += 0.01;
+        ki += 0.1;
         sprintf(msg_buf, "%f", ki);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
       } else if ( strcmp((char *)payload, "decKi") == 0 ) {
 
-        ki -= 0.01;
+        ki -= 0.1;
         sprintf(msg_buf, "%f", ki);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
       } else if ( strcmp((char *)payload, "incKd") == 0 ) {
 
-        kd += 0.01;
+        kd += 0.1;
         sprintf(msg_buf, "%f", kd);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
 
       } else if ( strcmp((char *)payload, "decKd") == 0 ) {
 
-        kd -= 0.01;
+        kd -= 0.1;
         sprintf(msg_buf, "%f", kd);
         Serial.printf("Sending to [%u]: %s\n", client_num, msg_buf);
         webSocket.sendTXT(client_num, msg_buf);
@@ -633,7 +713,7 @@ void onWebSocketEvent(uint8_t client_num,
       } else {
         Serial.println(*payload);
         Serial.println("[%u] Message not recognized");
-      }
+      } 
       break;
 
     // For everything else: do nothing
