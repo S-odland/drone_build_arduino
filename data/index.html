@@ -206,9 +206,9 @@
         }
 
         function sliderVal() {
-            writeToScreen("" + slider.value);
+            //writeToScreen("" + slider.value);
             console.log("Sending Slider Value");
-            websocket.send(this.value);
+            doSend(slider.value);
         }
 
         function incKp(){
@@ -237,7 +237,7 @@
 
         function incKd(){
             doSend("incKd");
-            writeToScreen("Kd Value:");
+            writeToScreen("Kd roll Value:");
             cntrlGn.disabled = false;
         }
 
@@ -245,6 +245,98 @@
             doSend("decKd");
             writeToScreen("Kd Value:");
             cntrlGn.disabled = false;
+        }
+
+        function incKpr(){
+            doSend("incKpr");
+            writeToScreen("Kp roll Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKpr(){
+            doSend("decKpr");
+            writeToScreen("Kp roll Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKir(){
+            doSend("incKir");
+            writeToScreen("Ki roll Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKir(){
+            doSend("decKir");
+            writeToScreen("Ki roll Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKdr(){
+            doSend("incKdr");
+            writeToScreen("Kd roll Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKdr(){
+            doSend("decKdr");
+            writeToScreen("Kd roll Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKpp(){
+            doSend("incKpp");
+            writeToScreen("Kp pitch Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKpp(){
+            doSend("decKpp");
+            writeToScreen("Kp pitch Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKip(){
+            doSend("incKip");
+            writeToScreen("Ki pitch Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKip(){
+            doSend("decKip");
+            writeToScreen("Ki pitch Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function incKdp(){
+            doSend("incKdp");
+            writeToScreen("Kd pitch Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function decKdp(){
+            doSend("decKdp");
+            writeToScreen("Kd pitch Value:");
+            cntrlGn.disabled = false;
+        }
+
+        function hoverLeft(){
+            doSend("hoverLeft");
+            writeToScreen("Hovering Left");
+        }
+
+        function hoverRight(){
+            doSend("hoverRight");
+            writeToScreen("Hovering Right");
+        }
+
+        function hoverForward(){
+            doSend("hoverForward");
+            writeToScreen("Hovering Forward");
+        }
+
+        function hoverBackward(){
+            doSend("hoverBackward");
+            writeToScreen("Hovering Backward");
         }
         
         // Call the init function as soon as the page loads
@@ -262,7 +354,7 @@
 
     <div class="grid-container">
         <div class="grid-child">
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
                 <div class="grid-child"style="color:white;">
                     Enable/Disable Motors
                 </div>
@@ -273,7 +365,7 @@
 
             <div class="grid-container"></div>
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
                 <div class="grid-child-one" style="color:white;">
                     Reset Motor Speeds
                 </div>
@@ -281,8 +373,6 @@
                     <button style="font-size:90%;border-radius:25px;background-color:red;align-self:center;width: 100%;color:white;height:100%;" id="killMotors"onclick = "shutdown()">1200 RPM</button>
                 </div>
             </div>
-
-            <div class="grid-container"></div>
 
             <!-- <p style="text-align:center;color:black">
                 Motor Speed Slider [1200-1600]
@@ -292,49 +382,40 @@
                 <input type="range" min="1200" max="1600" value="50" class="slider" id="myRange" oninput="sliderVal()">
             </div> -->
 
-            <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:150%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:white;height:150%;" id="changeRPM"onclick = "incBaseMotorSpeed()"></button>
+                    <button style="font-size:90%;border-radius:25px;background-color:lightgreen;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKp()">+kp</button>
                 </div>
                 <div class="grid-child-one">
-                    <button style="font-size:150%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:white;height:150%;" id="changeRPM"onclick = "decBaseMotorSpeed()"></button>
-                </div>
-            </div> -->
-
-            <!-- <div class="grid-container"></div> -->
-
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
-                
-                <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKp()">+kp</button>
-                </div>
-                <div class="grid-child-one">
-                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKp()">-kp</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:rgb(233, 233, 32);align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKp()">-kp</button>
                 </div>
             </div>
 
             <div class="grid-container"></div>
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKi()">+ki</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:lightgreen;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKi()">+ki</button>
                 </div>
                 <div class="grid-child-one">
-                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKi()">-ki</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:rgb(233, 233, 32);align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKi()">-ki </button>
                 </div>
             </div>
 
             <div class="grid-container"></div>
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKd()">+kd</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:lightgreen;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKd()">+kd</button>
                 </div>
                 <div class="grid-child-one">
-                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKd()">-kd</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:rgb(233, 233, 32);align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKd()">-kd</button>
                 </div>
             </div>
 
@@ -342,7 +423,7 @@
         <div class="grid-child">     
 
             <p style="text-align:center;color:black">
-                Motor Speed Slider [1200-1600]
+                1200  |  |  |  1300  |  |  |  1400  |  |  |  1500  |  |  |  1600
             </p>
 
             <div class="slidecontainer">
@@ -357,11 +438,11 @@
                 <div class="grid-child-one">
                     <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decBaseMotorSpeed()">-RPM</button>
                 </div>
-            </div>
+            </div> -->
 
-            <div class="grid-container"></div>
+            <!-- <div class="grid-container"></div> -->
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <!-- <div class="grid-container"style="background-color:blue;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
                     <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor1()">+RPM 1</button>
@@ -381,37 +462,73 @@
                 <div class="grid-child-one">
                     <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor2()">-RPM 2</button>
                 </div>
+            </div>-->
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:white;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "hoverLeft()">Left</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:white;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "hoverRight()">Right</button>
+                </div>
             </div>
 
             <div class="grid-container"></div>
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
                 
                 <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor3()">+RPM 3</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:white;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "hoverForward()">Forward</button>
                 </div>
                 <div class="grid-child-one">
-                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor3()">-RPM 3</button>
+                    <button style="font-size:90%;border-radius:25px;background-color:white;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "hoverBackward()">Backward</button>
                 </div>
-            </div>
+            </div> 
 
-            <div class="grid-container"></div>
+            <!-- <div class="grid-container"></div> -->
 
-            <div class="grid-container"style="background-color:blue;border-radius:25px;">
-                
-                <div class="grid-child-one" style="color:white;">
-                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "incMotor4()">+RPM 4</button>
-                </div>
-                <div class="grid-child-one">
-                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeRPM"onclick = "decMotor4()">-RPM 4</button>
-                </div>
-            </div> -->
-
-            <div class="grid-container"></div>
-
-            <p style="text-align:center;background-color:blue;padding-top:1%;">
+            <p style="text-align:center;background-color:#2683C6;padding-top:1%;">
                 <textarea style="width:97%;padding-bottom:1%;" id="msg" rows="20" cols="70"></textarea>
             </p>
+
+            <!-- <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKpr()">+kp r</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKpr()">-kp r</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKir()">+ki r</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKir()">-ki r</button>
+                </div>
+            </div>
+
+            <div class="grid-container"></div>
+
+            <div class="grid-container"style="background-color:#2683C6;border-radius:25px;">
+                
+                <div class="grid-child-one" style="color:white;">
+                    <button style="font-size:90%;border-radius:25px;background-color:greenyellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "incKdr()">+kd r</button>
+                </div>
+                <div class="grid-child-one">
+                    <button style="font-size:90%;border-radius:25px;background-color:yellow;align-self:center;width: 100%;color:black;height:150%;" id="changeGain"onclick = "decKdr()">-kd r</button>
+                </div>
+            </div> -->
         </div>
     </div>
 </body>

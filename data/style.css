@@ -18,7 +18,7 @@ nav.sticky {
     width: auto;
     font-size:400%;
     padding-left:5%;
-    background-color:blue;
+    background-color:#2683C6;
     color:white;
     padding-bottom: 15pt;
     padding-top:15pt;
@@ -161,7 +161,7 @@ input:checked:before {
     appearance: none;
     width: 100%; /* Full-width */
     height: 25px; /* Specified height */
-    background: blue; /* Grey background */
+    background: #2683C6; /* Grey background */
     outline: none; /* Remove outline */
     z-index: 0;
 }
