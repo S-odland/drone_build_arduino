@@ -152,9 +152,9 @@ void setup() {
   pitch = 0;
   yaw = 0;
 
-  ki = 10;
-  kp = 25;
-  kd = 80;
+  ki = 26.7;
+  kp = 12.3;
+  kd = 40;
   
 }
 
@@ -168,10 +168,7 @@ void loop() {
     
     read_accelerometer((accel),(accel+1),(accel+2));
     read_gyroscope((gyro),(gyro+1),(gyro+2));
-
-    gyro[0] = gyro[0]*0.0174533;
-    gyro[1] = gyro[1]*0.0174533;
-
+    
 //    acc_vector = sqrt(pow(accel[0],2) + pow(accel[1],2) + pow(accel[2],2));
 
     pitch_raw = atan2(accel[0],sqrt(accel[1] * accel[1] + accel[2] * accel[2]));
@@ -185,13 +182,13 @@ void loop() {
     pitch_low = atan2(Ax,sqrt(Ay * Ay + Az * Az));
     roll_low = atan2(Ay,sqrt(Ax * Ax + Az * Az));
 
-    C = 0.3;
+    C = 0.1;
     
-    roll_fus =  (1-C)*(roll_fus+gyro[0]*dT) + C*pitch_low;
-    pitch_fus =  (1-C)*(pitch_fus+gyro[1]*dT) + C*pitch_low;
+    roll_fus =  (1-C)*(roll_fus-gyro[0]*0.0174533*dT) + C*roll_low;
+    pitch_fus =  (1-C)*(pitch_fus+gyro[1]*0.0174533*dT) + C*pitch_low;
    
-    e_roll = roll_low - roll_ave;
-    e_pitch = pitch_low - pitch_ave;
+    e_roll = roll_fus - roll_ave;
+    e_pitch = pitch_fus - pitch_ave;
     e_yaw = yaw - yaw_ave;
   
     e_roll_dif = e_roll - e_roll_prev;
